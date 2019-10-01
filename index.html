@@ -5,6 +5,9 @@
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/react-router-dom/5.0.1/react-router-dom.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.4/redux.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/react-redux/7.1.1/react-redux.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/redux-thunk/2.3.0/redux-thunk.js'></script>
 <style>
 body {
   font-family: verdana;
@@ -30,11 +33,33 @@ input, button {
   <body>
     <div id='root'></div>
     <script type='text/babel'>
+
+      const { combineReducers, createStore, applyMiddleware } = Redux;
+      const SET_USER = 'SET_USER';
+
+      const reducer = combineReducers({
+        user: (state = {}, action)=> {
+          switch(action.type){
+            case SET_USER:
+              return action.user;
+          }
+          return state;
+        }
+      });
+
+      const store = createStore(reducer, applyMiddleware(ReduxThunk.default));
+
+      const setRandomUser = (user)=> ({ type: SET_USER, user });
+
+      store.subscribe(()=> {
+        console.log(store.getState().user);
+      });
+
       const API = 'https://acme-users-api-rev.herokuapp.com/api';
 
       const fetchUser = async ()=> {
         const storage = window.localStorage;
-        const userId = storage.getItem('userId'); 
+        const userId = storage.getItem('userId');
         if(userId){
           try {
             return (await axios.get(`${API}/users/detail/${userId}`)).data;
@@ -49,6 +74,15 @@ input, button {
         return  user;
       };
 
+      const getRandomUser = ()=> {
+        return async(dispatch)=> {
+          const user = (await axios.get('https://acme-users-api-rev.herokuapp.com/api/users/random')).data;
+          dispatch(setRandomUser(user));
+        }
+      }
+
+      store.dispatch(getRandomUser());
+
       const { render } = ReactDOM;
       const { Component } = React;
       const { HashRouter, Route, Link, Switch, Redirect } = ReactRouterDOM;
@@ -57,7 +91,7 @@ input, button {
         return (
           <ul>
             {
-              notes.filter(note => note.archived === archived).map( note => <li 
+              notes.filter(note => note.archived === archived).map( note => <li
                 key={ note.id }>
                   { note.text}
                   <br />
@@ -83,7 +117,7 @@ input, button {
 
       class Create extends Component{
         constructor(){
-          super(); 
+          super();
           this.state = {
             text: '',
             error: ''
@@ -135,7 +169,7 @@ input, button {
         async create(note){
           const created = (await axios.post(`${API}/users/${this.state.user.id}/notes`, note)).data;
           const notes = [...this.state.notes, created ];
-          this.setState({ notes }); 
+          this.setState({ notes });
         }
         render(){
           const { notes, user } = this.state;
