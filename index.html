@@ -35,13 +35,24 @@ input, button {
     <script type='text/babel'>
 
       const { combineReducers, createStore, applyMiddleware } = Redux;
+      const { Provider, connect } = ReactRedux;
+
       const SET_USER = 'SET_USER';
+      const SET_NOTES = 'SET_NOTES';
 
       const reducer = combineReducers({
         user: (state = {}, action)=> {
           switch(action.type){
             case SET_USER:
               return action.user;
+          }
+          return state;
+        },
+        notes: (state = [], action)=> {
+          switch(action.type){
+            case SET_NOTES:
+              return action.notes;
+
           }
           return state;
         }
@@ -56,7 +67,7 @@ input, button {
       });
 
       const API = 'https://acme-users-api-rev.herokuapp.com/api';
-
+/*
       const fetchUser = async ()=> {
         const storage = window.localStorage;
         const userId = storage.getItem('userId');
@@ -73,7 +84,7 @@ input, button {
         storage.setItem('userId', user.id);
         return  user;
       };
-
+*/
       const getRandomUser = ()=> {
         return async(dispatch)=> {
           const user = (await axios.get('https://acme-users-api-rev.herokuapp.com/api/users/random')).data;
@@ -82,6 +93,8 @@ input, button {
       }
 
       store.dispatch(getRandomUser());
+
+
 
       const { render } = ReactDOM;
       const { Component } = React;
@@ -101,8 +114,13 @@ input, button {
             }
           </ul>
         );
-
       };
+
+      // const Notes = connect(null, (dispatch)=> {
+      //   return {
+      //     getNewNote: ()=>
+      //   }
+      // })(_Notes)
 
       const Nav = ({ path, notes })=> {
         const archived = notes.filter( note => note.archived);
@@ -142,11 +160,12 @@ input, button {
         }
       }
 
-      class App extends Component{
+      const App = connect()(_App);
+
+      class _App extends Component{
         constructor(){
           super();
           this.state = {
-            user: {},
             notes: []
           };
           this.update = this.update.bind(this);
@@ -158,7 +177,7 @@ input, button {
           this.setState({ notes : this.state.notes.filter( _note => _note.id !== note.id)});
         }
         async componentDidMount(){
-          const user = await fetchUser();
+          //const user = await
           const notes = (await axios.get(`${API}/users/${ user.id }/notes`)).data;
           this.setState({ notes, user });
         }
@@ -191,7 +210,7 @@ input, button {
 
       }
       const root = document.querySelector('#root');
-      render(<App />, root);
+      render(<Provider store={ store }><App /></Provider>, root);
     </script>
   </body>
 </html>
